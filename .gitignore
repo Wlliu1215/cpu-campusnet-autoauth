@@ -1,0 +1,18 @@
+# Credentials and logs created on each computer
+credential.bin
+**/credential.bin
+logs/
+**/logs/
+*.log
+
+# Local configuration and temporary files
+.env
+.env.*
+*.tmp
+*.bak
+Thumbs.db
+Desktop.ini
+
+# Internal development notes are kept locally, not distributed
+.superpowers/
+docs/superpowers/
