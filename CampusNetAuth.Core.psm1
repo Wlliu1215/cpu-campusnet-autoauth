@@ -630,12 +630,12 @@ function Get-CampusScheduledTaskSpec {
 
     return [pscustomobject]@{
         TaskName          = 'CPU-CampusNet-AutoAuth'
-        Description       = 'Checks CPU campus network authentication every 30 seconds from 03:58 through 05:00, with a two-minute backoff after a portal time-policy refusal.'
+        Description       = 'Checks CPU campus network authentication every 30 seconds from 03:58 through 04:28, with a two-minute backoff after a portal time-policy refusal.'
         Executable        = $powerShellPath
-        Arguments         = '-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{0}" -WindowStart "03:58:00" -WindowEnd "05:00:00" -IntervalSeconds 30 -PolicyBackoffSeconds 120' -f $scriptPath
+        Arguments         = '-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{0}" -WindowStart "03:58:00" -WindowEnd "04:28:00" -IntervalSeconds 30 -PolicyBackoffSeconds 120' -f $scriptPath
         DailyAt           = [timespan]::Parse('03:58:00')
         WindowStart       = [timespan]::Parse('03:58:00')
-        WindowEnd         = [timespan]::Parse('05:00:00')
+        WindowEnd         = [timespan]::Parse('04:28:00')
         IntervalSeconds   = 30
         PolicyBackoffSeconds = 120
         UserId            = 'SYSTEM'
@@ -643,7 +643,7 @@ function Get-CampusScheduledTaskSpec {
         RunLevel          = 'Highest'
         MultipleInstances = 'IgnoreNew'
         StartWhenAvailable = $true
-        ExecutionTimeLimit = [timespan]::FromMinutes(70)
+        ExecutionTimeLimit = [timespan]::FromMinutes(40)
     }
 }
 

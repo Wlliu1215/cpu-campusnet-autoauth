@@ -3,7 +3,7 @@ param(
     [string]$CredentialPath,
     [string]$LogDirectory,
     [timespan]$WindowStart = ([timespan]::Parse('03:58:00')),
-    [timespan]$WindowEnd = ([timespan]::Parse('05:00:00')),
+    [timespan]$WindowEnd = ([timespan]::Parse('04:28:00')),
     [ValidateRange(1, 3600)][int]$IntervalSeconds = 30,
     [ValidateRange(30, 3600)][int]$PolicyBackoffSeconds = 120
 )

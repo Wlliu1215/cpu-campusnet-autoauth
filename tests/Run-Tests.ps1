@@ -87,18 +87,18 @@ Import-Module -Name $modulePath -Force
 
 Invoke-Test 'Authentication window includes exact boundaries' {
     $start = [timespan]::Parse('03:58:00')
-    $end = [timespan]::Parse('05:00:00')
+    $end = [timespan]::Parse('04:28:00')
 
     Assert-True (Test-InAuthenticationWindow -Now ([datetime]'2026-09-29 03:58:00') -Start $start -End $end)
-    Assert-True (Test-InAuthenticationWindow -Now ([datetime]'2026-09-29 05:00:00') -Start $start -End $end)
+    Assert-True (Test-InAuthenticationWindow -Now ([datetime]'2026-09-29 04:28:00') -Start $start -End $end)
 }
 
 Invoke-Test 'Authentication window excludes times immediately outside boundaries' {
     $start = [timespan]::Parse('03:58:00')
-    $end = [timespan]::Parse('05:00:00')
+    $end = [timespan]::Parse('04:28:00')
 
     Assert-False (Test-InAuthenticationWindow -Now ([datetime]'2026-09-29 03:57:59') -Start $start -End $end)
-    Assert-False (Test-InAuthenticationWindow -Now ([datetime]'2026-09-29 05:00:01') -Start $start -End $end)
+    Assert-False (Test-InAuthenticationWindow -Now ([datetime]'2026-09-29 04:28:01') -Start $start -End $end)
 }
 
 Invoke-Test 'Raw JSON portal response is parsed' {
@@ -425,7 +425,7 @@ Invoke-Test 'Offline round logs in once and the next round checks status again' 
 }
 
 Invoke-Test 'Delayed start inside the window runs through the exact final boundary' {
-    $state = [pscustomobject]@{ Now = [datetime]'2026-09-29 04:59:30'; StatusCalls = 0 }
+    $state = [pscustomobject]@{ Now = [datetime]'2026-09-29 04:27:30'; StatusCalls = 0 }
     $nowProvider = { $state.Now }.GetNewClosure()
     $sleepAction = { param($seconds) $state.Now = $state.Now.AddSeconds([double]$seconds) }.GetNewClosure()
     $statusAction = { $state.StatusCalls++; [pscustomobject]@{ IsOnline = $true } }.GetNewClosure()
@@ -433,7 +433,7 @@ Invoke-Test 'Delayed start inside the window runs through the exact final bounda
     $actual = Invoke-AuthenticationWindow `
         -StartDate ([datetime]'2026-09-29') `
         -WindowStart ([timespan]::Parse('03:58:00')) `
-        -WindowEnd ([timespan]::Parse('05:00:00')) `
+        -WindowEnd ([timespan]::Parse('04:28:00')) `
         -IntervalSeconds 30 `
         -NowProvider $nowProvider `
         -SleepAction $sleepAction `
@@ -474,7 +474,7 @@ Invoke-Test 'Unaligned delayed start follows fixed slots and checks the exact fi
 
 Invoke-Test 'Final scheduled check runs when the clock wakes within the final second' {
     $state = [pscustomobject]@{
-        Now = [datetime]'2026-10-08 04:59:30.500'
+        Now = [datetime]'2026-10-08 04:27:30.500'
         CheckTimes = New-Object System.Collections.ArrayList
     }
     $nowProvider = { $state.Now }.GetNewClosure()
@@ -487,7 +487,7 @@ Invoke-Test 'Final scheduled check runs when the clock wakes within the final se
     $actual = Invoke-AuthenticationWindow `
         -StartDate ([datetime]'2026-10-08') `
         -WindowStart ([timespan]::Parse('03:58:00')) `
-        -WindowEnd ([timespan]::Parse('05:00:00')) `
+        -WindowEnd ([timespan]::Parse('04:28:00')) `
         -IntervalSeconds 30 `
         -NowProvider $nowProvider `
         -SleepAction $sleepAction `
@@ -495,7 +495,7 @@ Invoke-Test 'Final scheduled check runs when the clock wakes within the final se
         -LoginAction { throw 'Login must not be called.' } `
         -LogAction { param($level, $event, $message) }
 
-    Assert-Equal '04:59:30.500,05:00:00.500' ($state.CheckTimes -join ',')
+    Assert-Equal '04:27:30.500,04:28:00.500' ($state.CheckTimes -join ',')
     Assert-Equal 2 $actual.Checks
 }
 
@@ -540,12 +540,12 @@ Invoke-Test 'Time policy refusal backs off login attempts while status checks co
     Assert-True (@($state.Logs | Where-Object { $_ -match '\|PolicyBackoff\|' }).Count -ge 1)
 }
 
-Invoke-Test 'Start after 05:00 exits without contacting the portal' {
-    $state = [pscustomobject]@{ Now = [datetime]'2026-09-29 05:00:01'; StatusCalls = 0 }
+Invoke-Test 'Start after 04:28 exits without contacting the portal' {
+    $state = [pscustomobject]@{ Now = [datetime]'2026-09-29 04:28:01'; StatusCalls = 0 }
     $actual = Invoke-AuthenticationWindow `
         -StartDate ([datetime]'2026-09-29') `
         -WindowStart ([timespan]::Parse('03:58:00')) `
-        -WindowEnd ([timespan]::Parse('05:00:00')) `
+        -WindowEnd ([timespan]::Parse('04:28:00')) `
         -IntervalSeconds 30 `
         -NowProvider ({ $state.Now }.GetNewClosure()) `
         -SleepAction { param($seconds) throw 'Sleep must not be called.' } `
@@ -602,14 +602,15 @@ Invoke-Test 'Scheduled task specification is SYSTEM daily at 03:58 and contains 
     Assert-Equal 'IgnoreNew' $actual.MultipleInstances
     Assert-True $actual.StartWhenAvailable
     Assert-Equal ([timespan]::Parse('03:58:00')) $actual.WindowStart
-    Assert-Equal ([timespan]::Parse('05:00:00')) $actual.WindowEnd
+    Assert-Equal ([timespan]::Parse('04:28:00')) $actual.WindowEnd
     Assert-Equal 30 $actual.IntervalSeconds
     Assert-Equal 120 $actual.PolicyBackoffSeconds
     Assert-True ($actual.ExecutionTimeLimit -gt ($actual.WindowEnd - $actual.DailyAt)) 'Task time limit ends before the authentication window.'
+    Assert-Equal ([timespan]::FromMinutes(40)) $actual.ExecutionTimeLimit
     Assert-True ($actual.Executable -match 'WindowsPowerShell\\v1\.0\\powershell\.exe$')
     Assert-True ($actual.Arguments -match '-File\s+"C:\\ProgramData\\CPU-CampusNet-AutoAuth\\CampusNetAuth\.ps1"')
     Assert-True ($actual.Arguments -match '-WindowStart\s+"03:58:00"')
-    Assert-True ($actual.Arguments -match '-WindowEnd\s+"05:00:00"')
+    Assert-True ($actual.Arguments -match '-WindowEnd\s+"04:28:00"')
     Assert-True ($actual.Arguments -match '-IntervalSeconds\s+30')
     Assert-True ($actual.Arguments -match '-PolicyBackoffSeconds\s+120')
     Assert-False ($actual.Arguments -match '(?i)student|password|upass|DDDDD') 'Task command line contains credential-like data.'
@@ -717,7 +718,7 @@ function Write-CampusLog {
 
 function Invoke-AuthenticationWindow {
     param($StartDate, $WindowStart, $WindowEnd, $IntervalSeconds, $PolicyBackoffSeconds, $NowProvider, $SleepAction, $StatusAction, $LoginAction, $LogAction)
-    if ($WindowStart -ne [timespan]::Parse('03:58:00') -or $WindowEnd -ne [timespan]::Parse('05:00:00') -or
+    if ($WindowStart -ne [timespan]::Parse('03:58:00') -or $WindowEnd -ne [timespan]::Parse('04:28:00') -or
         $IntervalSeconds -ne 30 -or $PolicyBackoffSeconds -ne 120) {
         throw 'Unexpected default authentication timing.'
     }
